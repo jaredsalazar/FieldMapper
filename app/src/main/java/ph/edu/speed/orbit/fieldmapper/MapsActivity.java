@@ -12,6 +12,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -108,6 +110,10 @@ public class MapsActivity extends FragmentActivity {
             }
 
             mMap.addPolygon(setup);
+
+            LatLng coordinate = new LatLng(lat[0], lng[0]);
+            CameraUpdate yourLocation = CameraUpdateFactory.newLatLngZoom(coordinate,20);
+            mMap.animateCamera(yourLocation);
         }else{
             Toast.makeText(getApplicationContext(), "no polygons to show", Toast.LENGTH_SHORT).show();
             mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
