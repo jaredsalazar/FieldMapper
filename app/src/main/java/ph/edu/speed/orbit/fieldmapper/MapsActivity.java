@@ -17,7 +17,10 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+
+import static com.google.maps.android.SphericalUtil.computeArea;
 
 public class MapsActivity extends FragmentActivity {
 
@@ -86,9 +89,15 @@ public class MapsActivity extends FragmentActivity {
 
         lat = json_parser.Lat;
         lng = json_parser.Lng;
-        Count = json_parser.Count;
 
-        if (Count != 0){
+
+        /** test coordinates for polygon simulation */
+        //lng = new Double[]{120.53849458694458,120.53875207901,120.53907394409178,120.53912758827211,120.53921341896057,120.53922414779663,120.53929924964905,120.53935289382935,120.53918123245239,120.53899884223937,120.53887009620665,120.53875207901,120.53848385810853,120.53849458694458};
+        //lat = new Double[]{14.68288638982858,14.682969417571767,14.683052445283455,14.682709955769598,14.682429736677431,14.682294816245724,14.682108003202861,14.681869297415833, 14.681807026298122,14.681827783339322, 14.681848540378576,14.682056110662632,14.682626927927863,14.682844875945142};
+
+        Count = lat.length;
+
+        if (lng.length != 0){
             setUpMap();
         }else{
             Toast.makeText(getApplicationContext(), "coordinates are null", Toast.LENGTH_SHORT).show();
@@ -109,8 +118,12 @@ public class MapsActivity extends FragmentActivity {
                 setup.add(new LatLng(lat[i], lng[i]));
             }
 
-            mMap.addPolygon(setup);
+            Polygon polygon = mMap.addPolygon(setup);
+            //double areaS = computeArea(polygon.getPoints());
+            //TextView stat = (TextView) findViewById(R.id.tvStat);
+           // stat.setText("Area: %.2f" + String.valueOf(areaS));
 
+            //zoom to location
             LatLng coordinate = new LatLng(lat[0], lng[0]);
             CameraUpdate yourLocation = CameraUpdateFactory.newLatLngZoom(coordinate,20);
             mMap.animateCamera(yourLocation);
@@ -118,6 +131,8 @@ public class MapsActivity extends FragmentActivity {
             Toast.makeText(getApplicationContext(), "no polygons to show", Toast.LENGTH_SHORT).show();
             mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
                     .getMap();
+
+
         }
 
     }
