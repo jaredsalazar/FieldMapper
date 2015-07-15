@@ -16,6 +16,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.gson.JsonArray;
@@ -42,6 +43,7 @@ public class MapsActivity extends FragmentActivity {
     JSONObject[] FarmPlotObjects;
     JSONArray FarmArray, PlotArray;
     JSONObject plotpolygonArray;
+    String[] plotpolygonArrayString, plotpolygonAreaString;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,19 +99,20 @@ public class MapsActivity extends FragmentActivity {
         stat.setText("Area: " + info);
 
         String str = pref.getString("farm", "[]");
-        String[] plotpolygonArrayString;
 
-        if(str != "[]") {
+        if(!(str == "[]")) {
             JSONObject[] coor;
             mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
             try {
                 FarmArray = new JSONArray(str);
                 FarmPlotObjects = new JSONObject[FarmArray.length()];
                 plotpolygonArrayString = new String[FarmArray.length()];
+                plotpolygonAreaString = new String[FarmArray.length()];
 
                 for (int i = 0; i < FarmArray.length(); i++) {
                     FarmPlotObjects[i] = FarmArray.getJSONObject(i);
                     plotpolygonArrayString[i] = FarmPlotObjects[i].getString("Coordinates");
+                    plotpolygonAreaString[i] = FarmPlotObjects[i].getString("Area");
                 }
 
 
@@ -129,7 +132,7 @@ public class MapsActivity extends FragmentActivity {
                         lng[j] = coor[j].getDouble("longitude");
                     }
 
-                    setUpMap(lat, lng, coor.length);
+                    setUpMap(lat, lng, coor.length,i);
                 }
 
 
@@ -145,11 +148,16 @@ public class MapsActivity extends FragmentActivity {
 
 
     //Setting up the polygons on the map
-    private void setUpMap(double[] lat, double[] lng, int length) {
+    private void setUpMap(double[] lat, double[] lng, int length, int plotnumber) {
         PolygonOptions setup = new PolygonOptions().strokeColor(Color.RED).fillColor(Color.BLUE);
         for (int i = 0; i < length ; i++) {
             setup.add(new LatLng(lat[i],lng[i]));
         }
+
+        MarkerOptions options = new MarkerOptions().position(new LatLng(lat[0],lng[0]));
+        options.title("Plot: " + String.valueOf(plotnumber));
+        options.snippet("Area: " + plotpolygonAreaString[plotnumber]);
+        mMap.addMarker(options);
 
         mMap.addPolygon(setup);
 
