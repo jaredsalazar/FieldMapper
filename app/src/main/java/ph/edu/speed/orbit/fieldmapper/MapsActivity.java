@@ -96,7 +96,6 @@ public class MapsActivity extends FragmentActivity {
         pref = getApplicationContext().getSharedPreferences("MyFarm", MODE_PRIVATE);
         String info = pref.getString("Area","No information");
         TextView stat = (TextView) findViewById(R.id.tvMapStat);
-        stat.setText("Area: " + info);
 
         String str = pref.getString("farm", "[]");
 
@@ -140,7 +139,8 @@ public class MapsActivity extends FragmentActivity {
                 e.printStackTrace();
             }
 
-            stat.setText(Arrays.toString(lat));
+            stat.setText("Number of Plots: " + FarmArray.length() +
+            "\nClick on the marker to view info");
 
         }
     }
