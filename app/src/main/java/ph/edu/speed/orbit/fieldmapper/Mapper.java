@@ -2,27 +2,27 @@ package ph.edu.speed.orbit.fieldmapper;
 
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Polygon;
-import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static com.google.maps.android.SphericalUtil.computeArea;
 
@@ -37,7 +37,11 @@ public class Mapper extends ActionBarActivity {
     Double[] lng = new Double[99];
     JSONObject jCoor;
     JSONArray ArrayCoor;
+    JsonArray farmArray;
     double Area;
+    int Plots;
+
+    ArrayList<LatLng> coor = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +54,14 @@ public class Mapper extends ActionBarActivity {
         Count = 0;
         jCoor = new JSONObject();
         ArrayCoor = new JSONArray();
+        coor = new ArrayList<>();
+
+        pref = this.getSharedPreferences("MyFarm", Context.MODE_PRIVATE);
+        String FarmString = pref.getString("farm", "[]");
+        JsonParser parser = new JsonParser();
+        JsonElement elem = parser.parse(FarmString);
+        farmArray = elem.getAsJsonArray();
+        Plots = farmArray.size();
 
         start.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,60 +81,44 @@ public class Mapper extends ActionBarActivity {
     }
 
     private void mapping_stop() {
-        pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
-        String str = pref.getString("Coordinates", "[]");
-        int num = pref.getInt("Count", 0);
-        new json_parser.coordinate_parser(str,num);
 
-        lat = json_parser.Lat;
-        lng = json_parser.Lng;
-        Count = json_parser.Count;
+            Area = computeArea(coor);
 
+        if(Area != 0){
+            Gson gson = new GsonBuilder().create();
+            JsonArray coorArray = gson.toJsonTree(coor).getAsJsonArray();
 
-        /** test coordinates for area computation */
-        //lng = new Double[]{120.53849458694458,120.53875207901,120.53907394409178,120.53912758827211,120.53921341896057,120.53922414779663,120.53929924964905,120.53935289382935,120.53918123245239,120.53899884223937,120.53887009620665,120.53875207901,120.53848385810853,120.53849458694458};
-        //lat = new Double[]{14.68288638982858,14.682969417571767,14.683052445283455,14.682709955769598,14.682429736677431,14.682294816245724,14.682108003202861,14.681869297415833, 14.681807026298122,14.681827783339322, 14.681848540378576,14.682056110662632,14.682626927927863,14.682844875945142};
+            Plots++;
+            JsonObject coorObject = new JsonObject();
+            coorObject.addProperty("ID",Plots);
+            coorObject.addProperty("Area",Area);
+            coorObject.addProperty("Coordinates", String.valueOf(coorArray));
 
-
-        if(lat.length > 2){
-            PolygonOptions setup = new PolygonOptions().strokeColor(Color.RED).fillColor(Color.BLUE);
-
-            for(int i = 0; i < lat.length; i++){
-                setup.add(new LatLng(lat[i], lng[i]));
-            }
-
-            Area = computeArea(setup.getPoints());
+            farmArray.add(coorObject);
             editor = pref.edit();
-            editor.putString("Area", String.valueOf(Area));
+            editor.putString("farm", String.valueOf(farmArray));
             editor.commit();
+
+            coor.clear();
         }
 
         TextView a = (TextView) findViewById(R.id.tvMstat);
-        a.setText("area: " + String.valueOf(Area));
+        a.setText(String.valueOf(farmArray));
 
         Intent i = new Intent(this,MapsActivity.class);
         startActivity(i);
     }
 
     private void mapping_start() {
-        try {
-            pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
-            editor = pref.edit();
+
             gpsTracker = new GPSTracker(Mapper.this);
             lat[Count] = gpsTracker.getLatitude();
             lng[Count] = gpsTracker.getLongitude();
-            jCoor.put("Latitude", lat[Count]);
-            jCoor.put("Longitude", lng[Count]);
-            ArrayCoor.put(jCoor);
+            LatLng c = new LatLng(lat[Count],lng[Count]);
+            coor.add(c);
+        TextView a = (TextView) findViewById(R.id.tvMstat);
+        a.setText(String.valueOf(c));
             Count++;
-            jCoor = new JSONObject();
-            editor.putString("Coordinates", String.valueOf(ArrayCoor));
-            editor.putInt("Count", Count);
-            editor.commit();
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
     }
 }
 
